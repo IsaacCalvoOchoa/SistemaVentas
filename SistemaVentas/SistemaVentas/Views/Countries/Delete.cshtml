@@ -1,0 +1,19 @@
+﻿@model SistemaVentas.Data.Entities.Country
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Eliminar</h1>
+
+<h3>Esta seguro de querer borrar?</h3>
+<div>
+    
+    <partial name="_CountryDetails"/>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="ID" />
+        <input type="submit" value="Eliminar" class="btn btn-outline-danger" /> |
+        <a asp-action="Index" class="btn btn-outline-success">Regresar</a>
+    </form>
+</div>
