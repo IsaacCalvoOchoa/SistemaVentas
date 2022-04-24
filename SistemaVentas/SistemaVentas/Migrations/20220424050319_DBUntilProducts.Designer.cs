@@ -12,8 +12,8 @@ using SistemaVentas.Data;
 namespace SistemaVentas.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20220404004912_AddUserEntities")]
-    partial class AddUserEntities
+    [Migration("20220424050319_DBUntilProducts")]
+    partial class DBUntilProducts
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -191,7 +191,7 @@ namespace SistemaVentas.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("StateID")
+                    b.Property<int?>("StateID")
                         .HasColumnType("int");
 
                     b.HasKey("ID");
@@ -199,7 +199,8 @@ namespace SistemaVentas.Migrations
                     b.HasIndex("StateID");
 
                     b.HasIndex("Name", "StateID")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StateID] IS NOT NULL");
 
                     b.ToTable("cities");
                 });
@@ -225,6 +226,83 @@ namespace SistemaVentas.Migrations
                     b.ToTable("countries");
                 });
 
+            modelBuilder.Entity("SistemaVentas.Data.Entities.ProductCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int?>("CategoryID")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryID");
+
+                    b.HasIndex("ProductId", "CategoryID")
+                        .IsUnique()
+                        .HasFilter("[ProductId] IS NOT NULL AND [CategoryID] IS NOT NULL");
+
+                    b.ToTable("productCategories");
+                });
+
+            modelBuilder.Entity("SistemaVentas.Data.Entities.ProductImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<Guid>("ImageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("productImage");
+                });
+
+            modelBuilder.Entity("SistemaVentas.Data.Entities.Products", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<float>("Stock")
+                        .HasColumnType("real");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("products");
+                });
+
             modelBuilder.Entity("SistemaVentas.Data.Entities.State", b =>
                 {
                     b.Property<int>("ID")
@@ -233,7 +311,7 @@ namespace SistemaVentas.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
 
-                    b.Property<int>("CountryID")
+                    b.Property<int?>("CountryID")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -246,7 +324,8 @@ namespace SistemaVentas.Migrations
                     b.HasIndex("CountryID");
 
                     b.HasIndex("Name", "CountryID")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[CountryID] IS NOT NULL");
 
                     b.ToTable("states");
                 });
@@ -264,7 +343,7 @@ namespace SistemaVentas.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int>("CityID")
+                    b.Property<int?>("CityID")
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -402,20 +481,40 @@ namespace SistemaVentas.Migrations
                 {
                     b.HasOne("SistemaVentas.Data.Entities.State", "State")
                         .WithMany("Cities")
-                        .HasForeignKey("StateID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("StateID");
 
                     b.Navigation("State");
+                });
+
+            modelBuilder.Entity("SistemaVentas.Data.Entities.ProductCategory", b =>
+                {
+                    b.HasOne("SistemaVentas.Data.Entities.Category", "Category")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("CategoryID");
+
+                    b.HasOne("SistemaVentas.Data.Entities.Products", "Product")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("ProductId");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("SistemaVentas.Data.Entities.ProductImage", b =>
+                {
+                    b.HasOne("SistemaVentas.Data.Entities.Products", "Product")
+                        .WithMany("ProductImages")
+                        .HasForeignKey("ProductId");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("SistemaVentas.Data.Entities.State", b =>
                 {
                     b.HasOne("SistemaVentas.Data.Entities.Country", "Country")
                         .WithMany("States")
-                        .HasForeignKey("CountryID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CountryID");
 
                     b.Navigation("Country");
                 });
@@ -424,11 +523,14 @@ namespace SistemaVentas.Migrations
                 {
                     b.HasOne("SistemaVentas.Data.Entities.City", "City")
                         .WithMany("Users")
-                        .HasForeignKey("CityID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CityID");
 
                     b.Navigation("City");
+                });
+
+            modelBuilder.Entity("SistemaVentas.Data.Entities.Category", b =>
+                {
+                    b.Navigation("ProductCategories");
                 });
 
             modelBuilder.Entity("SistemaVentas.Data.Entities.City", b =>
@@ -439,6 +541,13 @@ namespace SistemaVentas.Migrations
             modelBuilder.Entity("SistemaVentas.Data.Entities.Country", b =>
                 {
                     b.Navigation("States");
+                });
+
+            modelBuilder.Entity("SistemaVentas.Data.Entities.Products", b =>
+                {
+                    b.Navigation("ProductCategories");
+
+                    b.Navigation("ProductImages");
                 });
 
             modelBuilder.Entity("SistemaVentas.Data.Entities.State", b =>
